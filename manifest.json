@@ -2,11 +2,11 @@
   "name": "Tiktok Audio Control",
   "version": "0.0.1",
   "manifest_version": 2,
-  "description": "Control the audio of the video player on tiktoks webi client",
+  "description": "Control the audio of the video player on tiktoks web client",
   "icons": {
-    "16": "icons/icon16.png",
-    "48": "icons/icon48.png",
-    "128": "icons/icon128.png"
+    "16": "icons/icon.png",
+    "48": "icons/icon.png",
+    "128": "icons/icon.png"
   },
   "permissions": ["https://www.tiktok.com/*/video/*"],
   "content_scripts": [
