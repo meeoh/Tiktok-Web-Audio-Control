@@ -8,10 +8,10 @@
     "48": "icons/icon.png",
     "128": "icons/icon.png"
   },
-  "permissions": ["https://www.tiktok.com/*/video/*"],
+  "permissions": ["https://www.tiktok.com/*"],
   "content_scripts": [
     {
-      "matches": ["https://www.tiktok.com/*/video/*"],
+      "matches": ["https://www.tiktok.com/*"],
       "js": ["src/index.js"]
     }
   ]
