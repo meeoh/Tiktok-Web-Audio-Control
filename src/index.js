@@ -2,6 +2,16 @@ const URL = window.location.toString();
 let percentage = 10;
 let adjustRate = 5;
 
+function toArray(obj) {
+  var array = [];
+  if (!obj) return array;
+  // iterate backwards ensuring that length is an UInt32
+  for (var i = obj.length >>> 0; i--; ) {
+    array[i] = obj[i];
+  }
+  return array;
+}
+
 function increaseButtonHTML(video, percentageSpan) {
   let increaseButton = document.createElement("button");
   increaseButton.innerHTML = "+";
@@ -45,6 +55,13 @@ function generateInjectedHTML(video) {
   userInfo.after(wrapperDiv);
 }
 
+const clickFunction = () => {
+  setTimeout(() => {
+    const vid = document.getElementsByClassName("video-player horizontal")[0];
+    generateInjectedHTML(vid);
+  }, 0);
+};
+
 chrome.storage.sync.get("adjustRate", function(result) {
   if (result && result.adjustRate) {
     adjustRate = parseInt(result.adjustRate, 10);
@@ -54,20 +71,36 @@ chrome.storage.sync.get("adjustRate", function(result) {
     const video = document.getElementsByTagName("video")[0];
     generateInjectedHTML(video);
   } else {
-    const clickFunction = () => {
-      setTimeout(() => {
-        const vid = document.getElementsByClassName("horizontal")[0];
-        generateInjectedHTML(vid);
-      }, 0);
-    };
-    window.onload = function() {
-      const clickables = document.getElementsByClassName(
-        "video-feed-item-wrapper"
-      );
-      for (var i = 0; i < clickables.length; i++) {
-        const video = clickables[i];
-        video.addEventListener("click", clickFunction);
-      }
-    };
+    if (URL.includes("@")) {
+      window.onload = function() {
+        const clickables = toArray(
+          document.getElementsByClassName("video-feed-item")
+        );
+        clickables.forEach(video => {
+          video.addEventListener("click", clickFunction);
+        });
+      };
+    } else {
+      var observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          if (!mutation.addedNodes) return;
+
+          for (var i = 0; i < mutation.addedNodes.length; i++) {
+            // do things to your newly added nodes here
+            var node = mutation.addedNodes[i];
+            if (toArray(node.classList).indexOf("video-feed-item") > -1) {
+              node.addEventListener("click", () => clickFunction(node));
+            }
+          }
+        });
+      });
+
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: false,
+        characterData: false
+      });
+    }
   }
 });

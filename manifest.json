@@ -4,7 +4,7 @@
     "page": "src/options.html",
     "open_in_tab": false
   },
-  "version": "0.0.2",
+  "version": "0.0.3",
   "manifest_version": 2,
   "description": "Control the audio of the video player on tiktoks web client",
   "icons": {
@@ -16,7 +16,8 @@
   "content_scripts": [
     {
       "matches": ["https://www.tiktok.com/*"],
-      "js": ["src/index.js"]
+      "js": ["src/index.js"],
+      "run_at": "document_end"
     }
   ]
 }
