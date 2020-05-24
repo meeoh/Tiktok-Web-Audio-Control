@@ -100,8 +100,11 @@ chrome.storage.sync.get("adjustRate", function(result) {
   }
   // On individual video page
   if (URL.includes("/video/")) {
-    const video = document.getElementsByTagName("video")[0];
-    generateInjectedHTML(video);
+    window.onload = function() {
+      const video = document.getElementsByTagName("video")[0];
+      console.log(video);
+      generateInjectedHTML(video);
+    };
   } else if (URL.includes("@")) {
     window.onload = function() {
       attachListenerToClickables("video-feed-item");
