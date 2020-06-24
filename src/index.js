@@ -58,67 +58,87 @@ function generateInjectedHTML(video) {
 
 function clickFunction() {
   setTimeout(() => {
-    const vid = document.getElementsByClassName("video-player horizontal")[0];
+    const vid =
+      document.getElementsByClassName("video-player horizontal")[0] ||
+      document.getElementsByTagName("video")[0];
     generateInjectedHTML(vid);
   }, 0);
 }
 
-function trending() {
-  hasTrendingRan = true;
-  var observer = new MutationObserver(function(mutations) {
-    mutations.forEach(function(mutation) {
-      if (!mutation.addedNodes) return;
+// function trending() {
+//   hasTrendingRan = true;
+//   var observer = new MutationObserver(function (mutations) {
+//     attachListenerToClickables("video-feed-item");
+//   });
 
-      for (var i = 0; i < mutation.addedNodes.length; i++) {
-        // do things to your newly added nodes here
-        var node = mutation.addedNodes[i];
-        if (toArray(node.classList).indexOf("video-feed-item") > -1) {
-          node.addEventListener("click", () => clickFunction(node));
+//   observer.observe(document.body, {
+//     childList: true,
+//     subtree: true,
+//     attributes: false,
+//     characterData: false,
+//   });
+// }
+
+function attachListenerToClickables(className) {
+  const clickables = toArray(document.getElementsByClassName(className));
+  clickables.forEach((video) => {
+    video.addEventListener("click", clickFunction);
+  });
+}
+
+// pass in a comparison function that takes in a node, and returns true if
+// we should add music controls to that node. If comparison function is null
+// query for className after mutations are done and add to all candidates
+function setupObserver(className, comaprisonFunction = null) {
+  var observer = new MutationObserver(function (mutations) {
+    if (comaprisonFunction && comaprisonFunction instanceof Function) {
+      mutations.forEach(function (mutation) {
+        if (!mutation.addedNodes) return;
+        for (var i = 0; i < mutation.addedNodes.length; i++) {
+          var node = mutation.addedNodes[i];
+          if (comaprisonFunction(node)) {
+            const video = document.getElementsByTagName(className)[0];
+            generateInjectedHTML(video);
+          }
         }
-      }
-    });
+      });
+    } else {
+      attachListenerToClickables(className);
+    }
   });
 
   observer.observe(document.body, {
     childList: true,
     subtree: true,
     attributes: false,
-    characterData: false
+    characterData: false,
   });
 }
 
-function attachListenerToClickables(className) {
-  const clickables = toArray(document.getElementsByClassName(className));
-  clickables.forEach(video => {
-    video.addEventListener("click", clickFunction);
-  });
-}
-
-chrome.storage.sync.get("adjustRate", function(result) {
+chrome.storage.sync.get("adjustRate", function (result) {
   if (result && result.adjustRate) {
     adjustRate = parseInt(result.adjustRate, 10);
   }
-  // On individual video page
   if (URL.includes("/video/")) {
-    window.onload = function() {
-      const video = document.getElementsByTagName("video")[0];
-      console.log(video);
-      generateInjectedHTML(video);
-    };
+    // On individual video page
+    setupObserver("video", (node) => {
+      const classList = toArray(node.classList);
+      return classList.indexOf("video-card-big") > -1;
+    });
   } else if (URL.includes("@")) {
-    window.onload = function() {
-      attachListenerToClickables("video-feed-item");
-    };
-  } else if (URL.includes("trending")) {
-    trending();
+    // On someones profile page
+    setupObserver("video-feed-item");
+  } else if (URL.includes("foryou")) {
+    // trending needs some work since url changes
+    // trending();
   } else if (URL.includes("discover")) {
-    attachListenerToClickables("video-card");
+    setupObserver("video-card");
   }
 });
 
-chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
   if (request.title.includes("Trending") && !hasTrendingRan) {
-    trending();
+    // trending();
   } else {
     attachListenerToClickables("video-card");
   }
