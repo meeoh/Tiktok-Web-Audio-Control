@@ -47,13 +47,25 @@ function generateInjectedHTML(video) {
   const wrapperDiv = document.createElement("div");
   const volumeLabel = document.createElement("span");
   volumeLabel.innerHTML = "VOLUME: ";
+  wrapperDiv.className = "audioAdjuster";
+  wrapperDiv.style.marginBottom = "16px";
   wrapperDiv.append(
     volumeLabel,
     decreaseButton,
     percentageSpan,
     increaseButton
   );
-  userInfo.after(wrapperDiv);
+  if (userInfo) {
+    userInfo.after(wrapperDiv);
+  } else {
+    const parent =
+      video.parentElement.parentElement.parentElement.parentElement;
+    const existingElement = parent.parentElement.getElementsByClassName(
+      "audioAdjuster"
+    )[0];
+    if (existingElement) existingElement.remove();
+    parent.before(wrapperDiv);
+  }
 }
 
 function clickFunction() {
@@ -81,7 +93,7 @@ function clickFunction() {
 
 function attachListenerToClickables(className) {
   const clickables = toArray(document.getElementsByClassName(className));
-  clickables.forEach((video) => {
+  clickables.forEach(video => {
     video.addEventListener("click", clickFunction);
   });
 }
@@ -90,14 +102,14 @@ function attachListenerToClickables(className) {
 // we should add music controls to that node. If comparison function is null
 // query for className after mutations are done and add to all candidates
 function setupObserver(className, comaprisonFunction = null) {
-  var observer = new MutationObserver(function (mutations) {
+  var observer = new MutationObserver(function(mutations) {
     if (comaprisonFunction && comaprisonFunction instanceof Function) {
-      mutations.forEach(function (mutation) {
+      mutations.forEach(function(mutation) {
         if (!mutation.addedNodes) return;
         for (var i = 0; i < mutation.addedNodes.length; i++) {
           var node = mutation.addedNodes[i];
-          if (comaprisonFunction(node)) {
-            const video = document.getElementsByTagName(className)[0];
+          const video = comaprisonFunction(node);
+          if (video) {
             generateInjectedHTML(video);
           }
         }
@@ -111,35 +123,41 @@ function setupObserver(className, comaprisonFunction = null) {
     childList: true,
     subtree: true,
     attributes: false,
-    characterData: false,
+    characterData: false
   });
 }
 
-chrome.storage.sync.get("adjustRate", function (result) {
+chrome.storage.sync.get("adjustRate", function(result) {
   if (result && result.adjustRate) {
-    adjustRate = parseInt(result.adjustRate, 10);
+    adjustRate = parseInt(result.adjustRate, 10) || 5;
   }
-  if (URL.includes("/video/")) {
+  setTimeout(() => {
+    const localURL = window.location.toString().toLowerCase();
+    if (localURL.includes("@") && localURL.includes("/video/")) {
+      const preloadedVid = document.getElementsByTagName("video")[0];
+      if (preloadedVid) {
+        generateInjectedHTML(preloadedVid);
+      }
+    }
+  }, 1000);
+
+  if (URL.includes("/video/") || URL.includes("foryou")) {
     // On individual video page
-    setupObserver("video", (node) => {
-      const classList = toArray(node.classList);
-      return classList.indexOf("video-card-big") > -1;
+    setupObserver("video", node => {
+      if (node && node.tagName && node.tagName.toLowerCase() === "video") {
+        return node;
+      } else if (node && node.getElementsByTagName instanceof Function) {
+        const vid = node.getElementsByTagName("video")[0];
+        if (vid) return vid;
+      }
     });
   } else if (URL.includes("@")) {
     // On someones profile page
-    setupObserver("video-feed-item");
-  } else if (URL.includes("foryou")) {
-    // trending needs some work since url changes
-    // trending();
-  } else if (URL.includes("discover")) {
-    setupObserver("video-card");
-  }
-});
-
-chrome.runtime.onMessage.addListener(function (request, sender, sendResponse) {
-  if (request.title.includes("Trending") && !hasTrendingRan) {
-    // trending();
-  } else {
-    attachListenerToClickables("video-card");
+    setupObserver("video-feed-item", node => {
+      const localURL = window.location.toString().toLowerCase();
+      if (localURL.includes("video")) {
+        return node.getElementsByTagName("video")[0];
+      }
+    });
   }
 });
