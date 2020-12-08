@@ -93,7 +93,7 @@ function clickFunction() {
 
 function attachListenerToClickables(className) {
   const clickables = toArray(document.getElementsByClassName(className));
-  clickables.forEach(video => {
+  clickables.forEach((video) => {
     video.addEventListener("click", clickFunction);
   });
 }
@@ -102,9 +102,9 @@ function attachListenerToClickables(className) {
 // we should add music controls to that node. If comparison function is null
 // query for className after mutations are done and add to all candidates
 function setupObserver(className, comaprisonFunction = null) {
-  var observer = new MutationObserver(function(mutations) {
+  var observer = new MutationObserver(function (mutations) {
     if (comaprisonFunction && comaprisonFunction instanceof Function) {
-      mutations.forEach(function(mutation) {
+      mutations.forEach(function (mutation) {
         if (!mutation.addedNodes) return;
         for (var i = 0; i < mutation.addedNodes.length; i++) {
           var node = mutation.addedNodes[i];
@@ -123,13 +123,15 @@ function setupObserver(className, comaprisonFunction = null) {
     childList: true,
     subtree: true,
     attributes: false,
-    characterData: false
+    characterData: false,
   });
 }
 
-chrome.storage.sync.get("adjustRate", function(result) {
-  if (result && result.adjustRate) {
-    adjustRate = parseInt(result.adjustRate, 10) || 5;
+chrome.storage.sync.get(["adjustRate", "defaultLevel"], function (options) {
+  if (options) {
+    if (options.adjustRate) adjustRate = parseInt(options.adjustRate, 10) || 5;
+    if (options.defaultLevel)
+      percentage = parseInt(options.defaultLevel, 10) || 10;
   }
   setTimeout(() => {
     const localURL = window.location.toString().toLowerCase();
@@ -143,7 +145,7 @@ chrome.storage.sync.get("adjustRate", function(result) {
 
   if (URL.includes("/video/") || URL.includes("foryou")) {
     // On individual video page
-    setupObserver("video", node => {
+    setupObserver("video", (node) => {
       if (node && node.tagName && node.tagName.toLowerCase() === "video") {
         return node;
       } else if (node && node.getElementsByTagName instanceof Function) {
@@ -153,7 +155,7 @@ chrome.storage.sync.get("adjustRate", function(result) {
     });
   } else if (URL.includes("@")) {
     // On someones profile page
-    setupObserver("video-feed-item", node => {
+    setupObserver("video-feed-item", (node) => {
       const localURL = window.location.toString().toLowerCase();
       if (localURL.includes("video")) {
         return node.getElementsByTagName("video")[0];
