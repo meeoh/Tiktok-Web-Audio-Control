@@ -77,20 +77,6 @@ function clickFunction() {
   }, 0);
 }
 
-// function trending() {
-//   hasTrendingRan = true;
-//   var observer = new MutationObserver(function (mutations) {
-//     attachListenerToClickables("video-feed-item");
-//   });
-
-//   observer.observe(document.body, {
-//     childList: true,
-//     subtree: true,
-//     attributes: false,
-//     characterData: false,
-//   });
-// }
-
 function attachListenerToClickables(className) {
   const clickables = toArray(document.getElementsByClassName(className));
   clickables.forEach((video) => {
@@ -150,14 +136,29 @@ chrome.storage.sync.get(["adjustRate", "defaultLevel"], function (options) {
         return node;
       } else if (node && node.getElementsByTagName instanceof Function) {
         const vid = node.getElementsByTagName("video")[0];
+        const parentElement =
+          node.parentElement && node.parentElement.parentElement;
+        if (
+          vid &&
+          parentElement &&
+          parentElement.className.indexOf("video-card-big") > -1
+        ) {
+          const audioAdjuster = parentElement.getElementsByClassName(
+            "audioAdjuster"
+          );
+          if (audioAdjuster) {
+            audioAdjuster[0].remove();
+          }
+          return vid;
+        }
         if (vid) return vid;
       }
     });
-  } else if (URL.includes("@")) {
+  } else if (URL.includes("@") || window.location === "/") {
     // On someones profile page
     setupObserver("video-feed-item", (node) => {
       const localURL = window.location.toString().toLowerCase();
-      if (localURL.includes("video")) {
+      if (node && localURL.includes("video")) {
         return node.getElementsByTagName("video")[0];
       }
     });
