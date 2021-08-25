@@ -39,6 +39,9 @@ function decreaseButtonHTML(video, percentageSpan) {
 
 function generateInjectedHTML(video) {
   video.volume = percentage / 100;
+  video.onvolumechange = () => {
+    video.volume = percentage / 100;
+  };
   const userInfo = document.getElementsByClassName("user-info")[0];
   const percentageSpan = document.createElement("span");
   percentageSpan.textContent = `${percentage}%`;
@@ -60,9 +63,8 @@ function generateInjectedHTML(video) {
   } else {
     const parent =
       video.parentElement.parentElement.parentElement.parentElement;
-    const existingElement = parent.parentElement.getElementsByClassName(
-      "audioAdjuster"
-    )[0];
+    const existingElement =
+      parent.parentElement.getElementsByClassName("audioAdjuster")[0];
     if (existingElement) existingElement.remove();
     parent.before(wrapperDiv);
   }
@@ -143,9 +145,8 @@ chrome.storage.sync.get(["adjustRate", "defaultLevel"], function (options) {
           parentElement &&
           parentElement.className.indexOf("video-card-big") > -1
         ) {
-          const audioAdjuster = parentElement.getElementsByClassName(
-            "audioAdjuster"
-          );
+          const audioAdjuster =
+            parentElement.getElementsByClassName("audioAdjuster");
           if (audioAdjuster) {
             audioAdjuster[0].remove();
           }
